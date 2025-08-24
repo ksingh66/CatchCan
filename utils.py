@@ -30,13 +30,19 @@ def steer_right():
 def steer_left():
     board.pwm_servo_set_position(0.3, [[3, 1400]])
 
-steer_center():
+def steer_center():
     board.pwm_servo_set_position(0.3, [[3, 1100]])
 
-drive_forward(4, 2)
-drive_backward(4, 2)
-stop()
-
+steer_center()
+drive_forward(1, 2)
+drive_backward(1, 2)
+steer_left()
+drive_forward(1, 2)
+drive_backward(1, 2)
+steer_right()
+drive_forward(1, 2)
+drive_backward(1, 2)
+steer_center()
 
 time.sleep(0.5)
 board.enable_reception(False)  # Stop the recv thread
