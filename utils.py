@@ -1,50 +1,79 @@
+#!/usr/bin/env python3
+"""
+Robot Control Utilities
+"""
+
 import time
-# Connect to robot
 from ros_robot_controller_sdk import Board
-board = Board("/dev/ttyACM0")
-board.enable_reception(True)
-time.sleep(1)
+
+# Global board instance
+board = None
+
+def init_robot():
+    """Initialize robot connection"""
+    global board
+    try:
+        print("Connecting to robot...")
+        board = Board("/dev/ttyACM0")
+        board.enable_reception(True)
+        time.sleep(1)
+        print("Robot connected successfully!")
+        return True
+    except Exception as e:
+        print(f"Failed to connect to robot: {e}")
+        return False
 
 def face_camera_up():
-    board.pwm_servo_set_position(0.3, [[1, 500]])  # (time,[[motorid, position]]) 500 = straight up
+    """Point camera upward"""
+    if board:
+        print("Moving camera up...")
+        board.pwm_servo_set_position(0.3, [[1, 500]])   # 500 = straight up
+        board.pwm_servo_set_position(0.3, [[2, 1550]])
+        time.sleep(0.5)  # Give time for movement
 
 def face_camera_forward():
-    board.pwm_servo_set_position(0.3, [[1, 1500]])  # (time,[[motorid, position]]) 1500 = forward
+    """Point camera forward"""
+    if board:
+        print("Moving camera forward...")
+        board.pwm_servo_set_position(0.3, [[1, 1500]])  # 1500 = forward
+        board.pwm_servo_set_position(0.3, [[2, 1550]])
+        time.sleep(0.5)  # Give time for movement
 
-def drive_forward(duration, speed):
-    board.set_motor_speed([[1, 0], [2, -speed], [3, 0], [4, speed]])  # Motor 2 is inversed
-    time.sleep(duration)
-    stop()
+def drive_forward(speed):
+    """Drive robot forward"""
+    if board:
+        board.set_motor_speed([[1, 0], [2, -speed], [3, 0], [4, speed]])  # Motor 2 is inversed
 
-def drive_backward(duration, speed):
-    board.set_motor_speed([[1, 0], [2, speed], [3, 0], [4, -speed]])  # Motor 2 is inversed
-    time.sleep(duration)
-    stop()
+def drive_backward(speed):
+    """Drive robot backward"""
+    if board:
+        board.set_motor_speed([[1, 0], [2, speed], [3, 0], [4, -speed]])  # Motor 2 is inversed
 
 def stop():
-    board.set_motor_speed([[1, 0], [2, 0], [3, 0], [4, 0]])
+    """Stop all motors"""
+    if board:
+        board.set_motor_speed([[1, 0], [2, 0], [3, 0], [4, 0]])
+
+def steer_left():
+    """Steer left"""
+    if board:
+        board.pwm_servo_set_position(0.3, [[3, 1100]])
 
 def steer_right():
-    board.pwm_servo_set_position(0.3, [[3, 800]])
-   
-def steer_left():
-    board.pwm_servo_set_position(0.3, [[3, 1400]])
+    """Steer right"""
+    if board:
+        board.pwm_servo_set_position(0.3, [[3, 1400]])
 
 def steer_center():
-    board.pwm_servo_set_position(0.3, [[3, 1100]])
+    """Center steering"""
+    if board:
+        board.pwm_servo_set_position(0.3, [[3, 1250]])
 
-steer_center()
-drive_forward(1, 2)
-drive_backward(1, 2)
-steer_left()
-drive_forward(1, 2)
-drive_backward(1, 2)
-steer_right()
-drive_forward(1, 2)
-drive_backward(1, 2)
-steer_center()
-
-time.sleep(0.5)
-board.enable_reception(False)  # Stop the recv thread
-time.sleep(0.5)
-board.port.close()  # Explicitly close connection
+def cleanup_robot():
+    """Clean up robot resources"""
+    global board
+    if board:
+        print("Cleaning up robot...")
+        stop()  # Stop all motors
+        face_camera_forward()  # Return camera to forward position
+        board = None
