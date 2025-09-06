@@ -23,21 +23,6 @@ def init_robot():
         print(f"Failed to connect to robot: {e}")
         return False
 
-def face_camera_up():
-    """Point camera upward"""
-    if board:
-        print("Moving camera up...")
-        board.pwm_servo_set_position(0.3, [[1, 500]])   # 500 = straight up
-        board.pwm_servo_set_position(0.3, [[2, 1550]])
-        time.sleep(0.5)  # Give time for movement
-
-def face_camera_forward():
-    """Point camera forward"""
-    if board:
-        print("Moving camera forward...")
-        board.pwm_servo_set_position(0.3, [[1, 1500]])  # 1500 = forward
-        board.pwm_servo_set_position(0.3, [[2, 1550]])
-        time.sleep(0.5)  # Give time for movement
 
 def drive_forward(speed):
     """Drive robot forward"""
@@ -54,20 +39,25 @@ def stop():
     if board:
         board.set_motor_speed([[1, 0], [2, 0], [3, 0], [4, 0]])
 
-def steer_left():
-    """Steer left"""
-    if board:
-        board.pwm_servo_set_position(0.3, [[3, 1100]])
 
-def steer_right():
-    """Steer right"""
+def set_steering_angle(strength):
+    """
+    Set steering angle based on strength
+    strength: -1.0 (full left) to +1.0 (full right)
+    """
     if board:
-        board.pwm_servo_set_position(0.3, [[3, 1400]])
+        # Map strength (-1.0 to +1.0) to servo range (800 to 1400)
+        center_position = 1100
+        max_range = 300  # Distance from center to either extreme
+        
+        servo_position = center_position + (strength * max_range)
+        
+        # Clamp to safe range
+        servo_position = max(center_position - max_range, min(center_position+max_range, servo_position))
+        servo_position = int(servo_position)
+        
+        board.pwm_servo_set_position(0.3, [[1, servo_position]])
 
-def steer_center():
-    """Center steering"""
-    if board:
-        board.pwm_servo_set_position(0.3, [[3, 1250]])
 
 def cleanup_robot():
     """Clean up robot resources"""
@@ -75,5 +65,5 @@ def cleanup_robot():
     if board:
         print("Cleaning up robot...")
         stop()  # Stop all motors
-        face_camera_forward()  # Return camera to forward position
+        steer_center()
         board = None
